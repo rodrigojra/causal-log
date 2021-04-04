@@ -1,8 +1,8 @@
 # Causal log
 
-This project is to simulate to add and execute causality information under a operation/command that will be executed in a SMR (State Machine Replication) and save this information under the replica recovery log.
+This project is to simulate to add and execute causality information under an operation/command that will be executed in an SMR (State Machine Replication) and save this information under the replica recovery log.
 
-With that information, we can parallelize the operations under recovery phase.
+With that information, we can parallelize the operations under the recovery phase.
 
 ## Usage
 
