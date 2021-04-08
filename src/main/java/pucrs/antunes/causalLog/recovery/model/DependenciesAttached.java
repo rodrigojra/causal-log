@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.TimeUnit;
 
 import com.google.common.base.Stopwatch;
@@ -21,8 +22,11 @@ import pucrs.antunes.causalLog.utils.Utils;
  */
 public class DependenciesAttached extends RecoveryModel {
 
-	public DependenciesAttached(byte[][] recoveryLog) {
-		super(recoveryLog);
+	public DependenciesAttached(byte[][] recoveryLog, int threads) {
+		super(recoveryLog, threads);
+		pool = new ForkJoinPool(nThreads, ForkJoinPool.defaultForkJoinWorkerThreadFactory, null,
+				true, nThreads, nThreads, 0, null, 60, TimeUnit.SECONDS);
+		System.out.println("Executing dependencies attached model...");
 	}
 
 	private HashMap<Long, Task> scheduledMap = new HashMap<Long, Task>();
@@ -83,11 +87,11 @@ public class DependenciesAttached extends RecoveryModel {
 
 	private void submit(Task newTask, List<CompletableFuture<Void>> dependencies) {
 		if (dependencies.isEmpty()) {
-			System.out.println("submit pool =>" + newTask.request.getId());
+			//System.out.println("submit pool =>" + newTask.request.getId());
 			pool.execute(() -> execute(newTask));
 			// execute(newTask);
 		} else {
-			System.out.println("submit cf => " + newTask.request.getId());
+			//System.out.println("submit cf => " + newTask.request.getId());
 			after(dependencies).thenRun(() -> {
 
 				execute(newTask);
@@ -103,9 +107,12 @@ public class DependenciesAttached extends RecoveryModel {
 
 	private byte[] execute(Task task) {
 		return delay.ensureMinCost(() -> {
-			System.out.println(task.request.getId());
 			ByteBuffer resp = ByteBuffer.allocate(4);
-			resp.putInt(execute(task.request, replicaMap));
+			Integer cmdResult =  execute(task.request, replicaMap);
+			if (cmdResult == null) {
+				cmdResult = Integer.MIN_VALUE;
+			}
+			resp.putInt(cmdResult);
 			iterations.incrementAndGet();
 			// flagLastExecuted.set(task.request.getId());
 			return resp.array();

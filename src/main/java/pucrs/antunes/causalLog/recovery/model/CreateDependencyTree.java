@@ -8,6 +8,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.TimeUnit;
 
 import com.google.common.base.Stopwatch;
@@ -23,8 +24,11 @@ public class CreateDependencyTree extends RecoveryModel {
 
 	private final List<Task> scheduled = new LinkedList<>();
 
-	public CreateDependencyTree(byte[][] recoveryLog) {
-		super(recoveryLog);
+	public CreateDependencyTree(byte[][] recoveryLog, int threads) {
+		super(recoveryLog, threads);
+		pool = new ForkJoinPool(nThreads, ForkJoinPool.defaultForkJoinWorkerThreadFactory, null,
+				true, nThreads, nThreads, 0, null, 60, TimeUnit.SECONDS);
+		System.out.println("Executing create dependency tree model...");
 	}
 
 	@Override
@@ -52,9 +56,12 @@ public class CreateDependencyTree extends RecoveryModel {
 
 	private byte[] execute(Task task) {
 		return delay.ensureMinCost(() -> {
-			System.out.println(task.request.getId());
 			ByteBuffer resp = ByteBuffer.allocate(4);
-			resp.putInt(execute(task.request, replicaMap));
+			Integer cmdResult =  execute(task.request, replicaMap);
+			if (cmdResult == null) {
+				cmdResult = Integer.MIN_VALUE;
+			}
+			resp.putInt(cmdResult);
 			iterations.incrementAndGet();
 			// flagLastExecuted.set(task.request.getId());
 			return resp.array();

@@ -76,7 +76,7 @@ public class Utils {
 
 		for (int i = 0; i < workloadSize; i++) {
 			// Generating the cmd without dependencies
-			KvsCmd cmd = Utils.generateRandomCmd(random, maxKey, sparseness, conflict);
+			KvsCmd cmd = generateRandomCmd(random, maxKey, sparseness, conflict);
 			cmd.setId((long) i);
 			cmdArray[i] = cmd;
 		}
@@ -86,14 +86,20 @@ public class Utils {
 	public static void generateDependenciesForEachCmd(KvsCmd[] cmdArray) {
 
 		ArrayList<KvsCmd> dependencyList = null;
+		
 		for (int i = cmdArray.length - 1; i >= 0; i--) {
 			dependencyList = new ArrayList<KvsCmd>();
 			KvsCmd cmd = cmdArray[i];
 
 			for (int j = 0; j < cmdArray.length; j++) {
 				KvsCmd dep = cmdArray[j];
-
-				if (Utils.conflictWith(cmd, dep)) {
+				
+				if (cmd.getId() == dep.getId()) {
+					// In this case we don't want to generate a depedency as the command is the same.
+					continue;
+				}
+				
+				if (conflictWith(cmd, dep)) {
 					dependencyList.add(dep);
 				}
 			}

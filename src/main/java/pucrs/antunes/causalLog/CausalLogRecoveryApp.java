@@ -1,7 +1,5 @@
 package pucrs.antunes.causalLog;
 
-import org.apache.log4j.Logger;
-
 import pucrs.antunes.causalLog.recovery.map.KvsCmd;
 import pucrs.antunes.causalLog.recovery.model.CreateDependencyTree;
 import pucrs.antunes.causalLog.recovery.model.DependenciesAttached;
@@ -9,64 +7,53 @@ import pucrs.antunes.causalLog.recovery.model.Sequential;
 import pucrs.antunes.causalLog.utils.Utils;
 
 /**
- * Hello world!
+ * This is a causality for recovery log simulation
+ * @author Rodrigo Antunes
  *
  */
 public class CausalLogRecoveryApp {
-	
-	private static final Logger LOGGER = Logger.getLogger(CausalLogRecoveryApp.class);
-	
+
 	public static void main(String[] args) {
 
 		System.out.println("Causal logging");
 
-		// recovery type
 		// workload size
 		// threads
 		// sparseness
 		if (args.length != 3) {
 			System.out
-					.println("Usage: App " + "<recovery model> " + "<workload size> " + "<threads> " + "<sparseness> ");
+					.println("Usage: App " + "<workload size> " + "<threads> " + "<sparseness> ");
 			System.exit(1);
 		}
-		
-		LOGGER.info("recovery type " + args[0]);
-		LOGGER.info("workload size " + args[1]);
-		LOGGER.info("threads " + args[2]);
-		LOGGER.info("sparseness " + args[3]);
-		
-		runWorkload(
-				Integer.parseInt(args[0]), 
-				Integer.parseInt(args[1]), 
-				Integer.parseInt(args[2]),
-				Integer.parseInt(args[3]));
+
+		System.out.println("workload size " + args[0]);
+		System.out.println("threads " + args[1]);
+		System.out.println("sparseness " + args[2]);
+
+		runWorkload(Integer.parseInt(args[0]), Integer.parseInt(args[1]), Integer.parseInt(args[2]));
 	}
 
-	private static void runWorkload(int recoveryModel, int workloadSize, int threads, int sparseness) {
-		int maxKey = 0, conflict = 0;
-		
+	private static void runWorkload(int workloadSize, int threads, int sparseness) {
+		int maxKey = 1000, conflict = 1;
+		System.out.println("Generating commands..."); 
 		KvsCmd[] cmdArray = Utils.generateCommands(workloadSize, maxKey, sparseness, conflict);
-		
+		System.out.println("Generating dependencies...");
+		Utils.generateDependenciesForEachCmd(cmdArray);
+		System.out.println("Generating simulated recovery log...");
 		byte[][] recoveryLog = Utils.convertCmdArrayToBytes(cmdArray, workloadSize);
-		
-		// recoveryModel: 0 = Sequential, 1 = CreateDependencyTree, 2 = DependenciesAttached
-		switch (recoveryModel) {
-		case 0:
-			Sequential sequencial = new Sequential(recoveryLog);
-			sequencial.executeWorkflow();
-			break;
 
-		case 1:
-			CreateDependencyTree createDependencyTree = new CreateDependencyTree(recoveryLog);
-			createDependencyTree.executeWorkflow();
-			break;
-			
-		case 2:
-			DependenciesAttached dependenciesAttached = new DependenciesAttached(recoveryLog);
-			break;
-		default:
-			LOGGER.error("Invalid recovery type");
-			break;
-		}
+		executeModels(recoveryLog, threads);
+	}
+
+	private static void executeModels(byte[][] recoveryLog, int threads) {
+		Sequential sequencial = new Sequential(recoveryLog, threads);
+		sequencial.executeWorkflow();
+
+		CreateDependencyTree createDependencyTree = new CreateDependencyTree(recoveryLog, threads);
+		createDependencyTree.executeWorkflow();
+
+		DependenciesAttached dependenciesAttached = new DependenciesAttached(recoveryLog, threads);
+		dependenciesAttached.executeWorkflow();
+
 	}
 }

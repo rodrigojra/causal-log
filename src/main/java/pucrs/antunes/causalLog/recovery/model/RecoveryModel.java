@@ -7,8 +7,6 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.ForkJoinPool;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import pucrs.antunes.causalLog.recovery.map.KvsCmd;
@@ -31,16 +29,15 @@ public abstract class RecoveryModel {
 	}
 
 	SyntacticDelay delay = new SyntacticDelay(100000000);
-	protected ConcurrentHashMap<Integer, Integer> replicaMap;
+	protected ConcurrentHashMap<Integer, Integer> replicaMap = new ConcurrentHashMap<Integer, Integer>();
 	protected AtomicInteger iterations = new AtomicInteger(0);
 	protected byte[][] recoveryLog;
-	//TODO tem que virar parametro no construtor
-	private static final int nThreads = 2;
-	protected ExecutorService pool = new ForkJoinPool(nThreads, ForkJoinPool.defaultForkJoinWorkerThreadFactory, null,
-			true, nThreads, nThreads, 0, null, 60, TimeUnit.SECONDS);
+	protected int nThreads;
+	protected ExecutorService pool;
 
-	public RecoveryModel(byte[][] recoveryLog) {
+	public RecoveryModel(byte[][] recoveryLog, int threads) {
 		this.recoveryLog = recoveryLog;
+		this.nThreads = threads;
 	}
 
 	protected Integer execute(KvsCmd cmd, Map<Integer, Integer> state) {

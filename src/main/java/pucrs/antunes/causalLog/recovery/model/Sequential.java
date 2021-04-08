@@ -17,8 +17,9 @@ import pucrs.antunes.causalLog.utils.Utils;
  */
 public class Sequential extends RecoveryModel {
 
-	public Sequential(byte[][] recoveryLog) {
-		super(recoveryLog);
+	public Sequential(byte[][] recoveryLog, int threads) {
+		super(recoveryLog, threads);
+		System.out.println("Executing sequential model...");
 	}
 
 	@Override
@@ -28,19 +29,21 @@ public class Sequential extends RecoveryModel {
 		for (int i = 0; i < recoveryLog.length; i++) {
 			byte[] bs = recoveryLog[i];
 			KvsCmd cmdFromLog = Utils.byteArrayToCmd(bs);
-			Task newTask = new Task(cmdFromLog);
-			execute(newTask);
+			execute(cmdFromLog);
 		}
 		stopwatch.stop();
 		System.out.println("Recovery time elapsed: " + stopwatch.elapsed(TimeUnit.MILLISECONDS));
 		System.out.println("Recovery time elapsed: " + stopwatch.elapsed(TimeUnit.SECONDS));
 	}
 
-	private byte[] execute(Task task) {
+	private byte[] execute(KvsCmd cmd) {
 		return delay.ensureMinCost(() -> {
-			System.out.println(task.request.getId());
 			ByteBuffer resp = ByteBuffer.allocate(4);
-			resp.putInt(execute(task.request, replicaMap));
+			Integer cmdResult =  execute(cmd, replicaMap);
+			if (cmdResult == null) {
+				cmdResult = Integer.MIN_VALUE;
+			}
+			resp.putInt(cmdResult);
 			iterations.incrementAndGet();
 			// flagLastExecuted.set(task.request.getId());
 			return resp.array();

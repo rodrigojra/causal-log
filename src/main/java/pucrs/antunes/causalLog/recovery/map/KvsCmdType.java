@@ -16,8 +16,8 @@ public enum KvsCmdType {
 		Integer execute(Map<Integer, Integer> state, KvsCmd cmd) {
 			Integer key = cmd.getKey();
 			Integer value = cmd.getValue();
-			state.put(key, value);
-			return value;
+			return state.put(key, value);
+			 
 		}
 	},
 
