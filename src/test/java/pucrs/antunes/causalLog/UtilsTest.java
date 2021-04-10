@@ -212,7 +212,7 @@ public class UtilsTest {
 				int randomOp = random.nextInt(2);
 
 				if (randomOp == 0) {
-					List<KvsCmd> dependencies = new ArrayList<KvsCmd>(1);
+					ArrayList<KvsCmd> dependencies = new ArrayList<KvsCmd>(1);
 					dependencies.add(cmdDep);
 					cmdFromBytes.setDependencies(dependencies);
 				}

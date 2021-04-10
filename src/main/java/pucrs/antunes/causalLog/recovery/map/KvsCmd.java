@@ -4,6 +4,7 @@
 package pucrs.antunes.causalLog.recovery.map;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -14,19 +15,19 @@ public class KvsCmd implements Serializable {
 
 	private static final long serialVersionUID = 5802411485930840619L;
 	
-	public KvsCmd(KvsCmdType cmdType, Integer key, Integer value, List<KvsCmd> dependencies) {
+	public KvsCmd(KvsCmdType cmdType, Integer key, Integer value) {
 		super();
 		this.type = cmdType;
 		this.key = key;
 		this.value = value;
-		this.dependencies = dependencies;
+		this.dependencies = new ArrayList<KvsCmd>(0);
 	}
 
 	private Long id;
 	private KvsCmdType type;
 	private Integer key;
 	private Integer value;
-	private List<KvsCmd> dependencies;
+	private ArrayList<KvsCmd> dependencies;
 
 	
 	public KvsCmdType getType() {
@@ -56,7 +57,7 @@ public class KvsCmd implements Serializable {
 		return dependencies;
 	}
 	
-	public void setDependencies(List<KvsCmd> dependencies) {
+	public void setDependencies(ArrayList<KvsCmd> dependencies) {
 		this.dependencies = dependencies;
 	}
 

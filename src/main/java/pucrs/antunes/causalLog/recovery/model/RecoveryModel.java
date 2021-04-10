@@ -28,7 +28,7 @@ public abstract class RecoveryModel {
 		}
 	}
 
-	SyntacticDelay delay = new SyntacticDelay(100000000);
+	SyntacticDelay delay = new SyntacticDelay(10000);
 	protected ConcurrentHashMap<Integer, Integer> replicaMap = new ConcurrentHashMap<Integer, Integer>();
 	protected AtomicInteger iterations = new AtomicInteger(0);
 	protected byte[][] recoveryLog;
