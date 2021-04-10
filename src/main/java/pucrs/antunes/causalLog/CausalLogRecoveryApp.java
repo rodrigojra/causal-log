@@ -9,10 +9,12 @@ import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
+import org.apache.commons.lang3.StringUtils;
 
 import pucrs.antunes.causalLog.recovery.map.KvsCmd;
 import pucrs.antunes.causalLog.recovery.model.CreateDependencyTree;
 import pucrs.antunes.causalLog.recovery.model.DependenciesAttached;
+import pucrs.antunes.causalLog.recovery.model.RecoveryModel.Models;
 import pucrs.antunes.causalLog.recovery.model.Sequential;
 import pucrs.antunes.causalLog.utils.Utils;
 
@@ -23,6 +25,8 @@ import pucrs.antunes.causalLog.utils.Utils;
  *
  */
 public class CausalLogRecoveryApp {
+	
+	
 
 	public static void main(String[] args) {
 
@@ -48,10 +52,6 @@ public class CausalLogRecoveryApp {
 
 			if (cmd.hasOption("g")) {
 				String[] parameters = cmd.getOptionValues("g");
-				/*
-				 * for (String parameter : parameters) { System.out.println("We have = " +
-				 * parameter); }
-				 */
 				int workloadSize = Integer.parseInt(parameters[0]);
 				float sparseness = Float.parseFloat(parameters[1]);
 
@@ -61,11 +61,11 @@ public class CausalLogRecoveryApp {
 				System.out.println("Finished generation of Recovery Log ");
 
 			} else if (cmd.hasOption("r")) {
-				String interactionId = cmd.getOptionValue("r");
-				System.out.println("We have --interactionId option " + interactionId);
-				if (cmd.hasOption("c")) {
-					System.out.println("( --clientId option is omitted because --interactionId option is defined)");
-				}
+				String[] parameters = cmd.getOptionValues("r");
+				String model = StringUtils.upperCase(parameters[0]) ;
+				int threads = Integer.parseInt(parameters[1]);
+				runWorkload(model, threads);
+				System.out.println("Finished execution of model "+model+" with "+ threads+" threads ");
 			} else {
 				System.out.println("please specify one of the command line options: ");
 				HelpFormatter formatter = new HelpFormatter();
@@ -83,30 +83,25 @@ public class CausalLogRecoveryApp {
 
 	private static void generateRecoveryLog(int workloadSize, float sparseness) {
 		int maxKey = 5, conflict = 1;
-		System.out.println("Generating commands...");
-		Utils.generateRecoveryLog(workloadSize, maxKey, sparseness, conflict);
-		System.out.println("Generating dependencies...");
-		// Utils.generateDependenciesForEachCmd(cmdArray);
 		System.out.println("Generating simulated recovery log...");
+		Utils.generateRecoveryLog(workloadSize, maxKey, sparseness, conflict);
 	}
 
-	private static void runWorkload(int threads) {
+	private static void runWorkload(String model, int threads) {
 		ArrayList<KvsCmd> readRecoveryFromFile = Utils.readRecoveryLogFromFile();
 		KvsCmd[] cmdArray = readRecoveryFromFile.toArray(new KvsCmd[0]);
 		byte[][] recoveryLog = Utils.convertCmdArrayToBytes(cmdArray, readRecoveryFromFile.size());
-		executeModels(recoveryLog, threads);
-
+		
+		if (StringUtils.containsIgnoreCase(model, Models.SEQUENTIAL.toString()) ) {
+			Sequential sequencial = new Sequential(recoveryLog, threads);
+			sequencial.executeWorkflow();
+		} else if (StringUtils.containsIgnoreCase(model, Models.GRAPH.toString()) ) {
+			CreateDependencyTree createDependencyTree = new CreateDependencyTree(recoveryLog, threads);
+			createDependencyTree.executeWorkflow();
+		} else if (StringUtils.containsIgnoreCase(model, Models.ATTACHED.toString()) ) {
+			DependenciesAttached dependenciesAttached = new DependenciesAttached(recoveryLog, threads);
+			dependenciesAttached.executeWorkflow();
+		}
 	}
 
-	private static void executeModels(byte[][] recoveryLog, int threads) {
-		Sequential sequencial = new Sequential(recoveryLog, threads);
-		sequencial.executeWorkflow();
-
-		CreateDependencyTree createDependencyTree = new CreateDependencyTree(recoveryLog, threads);
-		createDependencyTree.executeWorkflow();
-
-		DependenciesAttached dependenciesAttached = new DependenciesAttached(recoveryLog, threads);
-		dependenciesAttached.executeWorkflow();
-
-	}
 }

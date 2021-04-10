@@ -112,7 +112,8 @@ public class Utils {
 			Date date = new Date();
 			SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss-SS");
 
-			FileOutputStream writeData = new FileOutputStream("target/recovery-bin" + dateFormat.format(date) + ".dat");
+			//FileOutputStream writeData = new FileOutputStream("target/recovery-bin" + dateFormat.format(date) + ".dat");
+			FileOutputStream writeData = new FileOutputStream("target/recovery-bin.dat");
 			ObjectOutputStream writeStream = new ObjectOutputStream(writeData);
 
 			writeStream.writeObject(cmdArray);
@@ -127,7 +128,7 @@ public class Utils {
 	public static ArrayList<KvsCmd> readRecoveryLogFromFile() {
 		ArrayList<KvsCmd> cmdArray = null;
 		try {
-			FileInputStream readData = new FileInputStream("target/recovery.dat");
+			FileInputStream readData = new FileInputStream("target/recovery-bin.dat");
 			ObjectInputStream readStream = new ObjectInputStream(readData);
 			cmdArray = (ArrayList<KvsCmd>) readStream.readObject();
 			readStream.close();

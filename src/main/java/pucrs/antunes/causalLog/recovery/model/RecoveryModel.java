@@ -17,6 +17,22 @@ import pucrs.antunes.causalLog.utils.SyntacticDelay;
  *
  */
 public abstract class RecoveryModel {
+	
+	public enum Models {
+		SEQUENTIAL("SEQUENTIAL"),
+		GRAPH("GRAPH"),
+		ATTACHED("ATTACHED");
+
+		private final String model;
+		Models(String string) {
+			this.model = string;
+		}
+		
+	    @Override
+	    public String toString() {
+	        return this.model;
+	    }		
+	}
 
 	static final class Task {
 		final KvsCmd request;
