@@ -43,10 +43,6 @@ public class CausalLogRecoveryApp {
 		CommandLineParser parser = new DefaultParser();
 		CommandLine cmd = null;
 		try {
-
-			for (String arg : args) {
-				System.out.println("We have = " + arg);
-			}
 			cmd = parser.parse(options, args);
 
 			if (cmd.hasOption("g")) {
@@ -68,7 +64,7 @@ public class CausalLogRecoveryApp {
 				runWorkload(model, threads, filename);
 				System.out.println("Finished execution of model " + model + " with " + threads + " threads ");
 			} else {
-				System.out.println("please specify one of the command line options: ");
+				System.out.println("Please specify one of the command line options: ");
 				HelpFormatter formatter = new HelpFormatter();
 				formatter.printHelp("Causal recovery log simulation", options);
 			}

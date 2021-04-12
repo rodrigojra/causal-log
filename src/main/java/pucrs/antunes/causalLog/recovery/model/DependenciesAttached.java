@@ -27,7 +27,7 @@ public class DependenciesAttached extends RecoveryModel {
 		super(recoveryLog, threads);
 		pool = new ForkJoinPool(nThreads, ForkJoinPool.defaultForkJoinWorkerThreadFactory, null, true, nThreads,
 				nThreads, 0, null, 60, TimeUnit.SECONDS);
-		System.out.println("Executing dependencies attached model...");
+		System.out.println("Executing attached model workload size: " + recoveryLog.size() +" number of threads: "+threads);
 	}
 
 	private HashMap<Long, Task> scheduledMap = new HashMap<Long, Task>();
@@ -90,8 +90,8 @@ public class DependenciesAttached extends RecoveryModel {
 		}
 
 		stopwatch.stop();
-		System.out.println("Recovery time elapsed: " + stopwatch.elapsed(TimeUnit.MILLISECONDS));
-		System.out.println("Recovery time elapsed: " + stopwatch.elapsed(TimeUnit.SECONDS));
+		System.out.println("Recovery time elapsed MILLISECONDS: " + stopwatch.elapsed(TimeUnit.MILLISECONDS));
+		System.out.println("Recovery time elapsed SECONDS: " + stopwatch.elapsed(TimeUnit.SECONDS));
 	}
 
 	private void addTaskMap(Task newTask) {

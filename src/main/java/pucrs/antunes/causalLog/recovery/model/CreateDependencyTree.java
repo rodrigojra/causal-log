@@ -29,7 +29,8 @@ public class CreateDependencyTree extends RecoveryModel {
 		super(recoveryLog, threads);
 		pool = new ForkJoinPool(nThreads, ForkJoinPool.defaultForkJoinWorkerThreadFactory, null, true, nThreads,
 				nThreads, 0, null, 60, TimeUnit.SECONDS);
-		System.out.println("Executing create dependency tree model...");
+		System.out.println("Executing graph model workload size: " + recoveryLog.size() +" number of threads: "+threads);
+		
 	}
 
 	@Override
@@ -54,8 +55,8 @@ public class CreateDependencyTree extends RecoveryModel {
 		}
 
 		stopwatch.stop();
-		System.out.println("Recovery time elapsed: " + stopwatch.elapsed(TimeUnit.MILLISECONDS));
-		System.out.println("Recovery time elapsed: " + stopwatch.elapsed(TimeUnit.SECONDS));
+		System.out.println("Recovery time elapsed MILLISECONDS: " + stopwatch.elapsed(TimeUnit.MILLISECONDS));
+		System.out.println("Recovery time elapsed SECONDS: " + stopwatch.elapsed(TimeUnit.SECONDS));
 	}
 
 	private void doSchedule(KvsCmd cmd) {

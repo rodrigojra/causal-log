@@ -19,7 +19,7 @@ public class Sequential extends RecoveryModel {
 
 	public Sequential(ArrayList<KvsCmd> recoveryLog, int threads) {
 		super(recoveryLog, threads);
-		System.out.println("Executing sequential model...");
+		System.out.println("Executing sequential model workload size: " + recoveryLog.size() +" number of threads: "+threads);
 	}
 
 	@Override
@@ -37,8 +37,8 @@ public class Sequential extends RecoveryModel {
 		}
 
 		stopwatch.stop();
-		System.out.println("Recovery time elapsed: " + stopwatch.elapsed(TimeUnit.MILLISECONDS));
-		System.out.println("Recovery time elapsed: " + stopwatch.elapsed(TimeUnit.SECONDS));
+		System.out.println("Recovery time elapsed MILLISECONDS: " + stopwatch.elapsed(TimeUnit.MILLISECONDS));
+		System.out.println("Recovery time elapsed SECONDS: " + stopwatch.elapsed(TimeUnit.SECONDS));
 	}
 
 	private byte[] execute(KvsCmd cmd) {
