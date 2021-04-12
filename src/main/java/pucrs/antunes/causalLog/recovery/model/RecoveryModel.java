@@ -3,6 +3,7 @@
  */
 package pucrs.antunes.causalLog.recovery.model;
 
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
@@ -44,14 +45,14 @@ public abstract class RecoveryModel {
 		}
 	}
 
-	SyntacticDelay delay = new SyntacticDelay(10000);
+	SyntacticDelay delay = new SyntacticDelay(1000000);
 	protected ConcurrentHashMap<Integer, Integer> replicaMap = new ConcurrentHashMap<Integer, Integer>();
 	protected AtomicInteger iterations = new AtomicInteger(0);
-	protected byte[][] recoveryLog;
+	protected ArrayList<KvsCmd> recoveryLog;
 	protected int nThreads;
 	protected ExecutorService pool;
 
-	public RecoveryModel(byte[][] recoveryLog, int threads) {
+	public RecoveryModel(ArrayList<KvsCmd> recoveryLog, int threads) {
 		this.recoveryLog = recoveryLog;
 		this.nThreads = threads;
 	}

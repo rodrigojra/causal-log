@@ -18,6 +18,7 @@ import pucrs.antunes.causalLog.recovery.model.RecoveryModel.Models;
 import pucrs.antunes.causalLog.recovery.model.Sequential;
 import pucrs.antunes.causalLog.utils.Utils;
 
+
 /**
  * This is a causality for recovery log simulation
  * 
@@ -25,21 +26,19 @@ import pucrs.antunes.causalLog.utils.Utils;
  *
  */
 public class CausalLogRecoveryApp {
-	
-	
 
 	public static void main(String[] args) {
 
 		System.out.println("Causal logging");
 		Options options = new Options();
-		options.addOption(Option.builder("g").longOpt("generate-log").hasArg(true)
-				.desc("workload size ([REQUIRED] or use --workload)" + "\nsparseness ([REQUIRED] or use --sparseness) ")
-				.numberOfArgs(2).required(false).build());
-		options.addOption(
-				Option.builder("r").longOpt("run-model").hasArg(true)
-						.desc("recovery model ([REQUIRED] sequential , graph, attached)"
-								+ "\n number of threads ([REQUIRED] 1, 2, 4, 8)")
-						.numberOfArgs(2).required(false).build());
+		options.addOption(Option
+				.builder("g").longOpt("generate-log").hasArg(true).desc("workload size ([REQUIRED] or use --workload)"
+						+ "\nsparseness ([REQUIRED] or use --sparseness) " + "\njson file")
+				.numberOfArgs(3).required(false).build());
+		options.addOption(Option.builder("r").longOpt("run-model").hasArg(true)
+				.desc("recovery model ([REQUIRED] sequential , graph, attached)"
+						+ "\n number of threads ([REQUIRED] 1, 2, 4, 8)" + "\n filename")
+				.numberOfArgs(3).required(false).build());
 
 		CommandLineParser parser = new DefaultParser();
 		CommandLine cmd = null;
@@ -54,18 +53,20 @@ public class CausalLogRecoveryApp {
 				String[] parameters = cmd.getOptionValues("g");
 				int workloadSize = Integer.parseInt(parameters[0]);
 				float sparseness = Float.parseFloat(parameters[1]);
+				boolean isJson = Boolean.parseBoolean(parameters[2]);
 
 				System.out.println("Generating Recovery Log with workload size = " + workloadSize + " and sparseness = "
 						+ sparseness);
-				generateRecoveryLog(workloadSize, sparseness);
+				generateRecoveryLog(workloadSize, sparseness, isJson);
 				System.out.println("Finished generation of Recovery Log ");
 
 			} else if (cmd.hasOption("r")) {
 				String[] parameters = cmd.getOptionValues("r");
-				String model = StringUtils.upperCase(parameters[0]) ;
+				String model = StringUtils.upperCase(parameters[0]);
 				int threads = Integer.parseInt(parameters[1]);
-				runWorkload(model, threads);
-				System.out.println("Finished execution of model "+model+" with "+ threads+" threads ");
+				String filename = parameters[2];
+				runWorkload(model, threads, filename);
+				System.out.println("Finished execution of model " + model + " with " + threads + " threads ");
 			} else {
 				System.out.println("please specify one of the command line options: ");
 				HelpFormatter formatter = new HelpFormatter();
@@ -81,25 +82,25 @@ public class CausalLogRecoveryApp {
 
 	}
 
-	private static void generateRecoveryLog(int workloadSize, float sparseness) {
-		int maxKey = 5, conflict = 1;
+	private static void generateRecoveryLog(int workloadSize, float sparseness, boolean isJson) {
+		int maxKey = workloadSize, conflict = 1;
 		System.out.println("Generating simulated recovery log...");
-		Utils.generateRecoveryLog(workloadSize, maxKey, sparseness, conflict);
+		Utils.generateRecoveryLog(workloadSize, maxKey, sparseness, conflict, isJson);
 	}
 
-	private static void runWorkload(String model, int threads) {
-		ArrayList<KvsCmd> readRecoveryFromFile = Utils.readRecoveryLogFromFile();
-		KvsCmd[] cmdArray = readRecoveryFromFile.toArray(new KvsCmd[0]);
-		byte[][] recoveryLog = Utils.convertCmdArrayToBytes(cmdArray, readRecoveryFromFile.size());
-		
-		if (StringUtils.containsIgnoreCase(model, Models.SEQUENTIAL.toString()) ) {
-			Sequential sequencial = new Sequential(recoveryLog, threads);
+	private static void runWorkload(String model, int threads, String filename) {
+		ArrayList<KvsCmd> readRecoveryFromFile = Utils.readRecoveryLogFromFile(filename);
+//		KvsCmd[] cmdArray = readRecoveryFromFile.toArray(new KvsCmd[0]);
+//		byte[][] recoveryLog = Utils.convertCmdArrayToBytes(cmdArray, readRecoveryFromFile.size());
+
+		if (StringUtils.containsIgnoreCase(model, Models.SEQUENTIAL.toString())) {
+			Sequential sequencial = new Sequential(readRecoveryFromFile, threads);
 			sequencial.executeWorkflow();
-		} else if (StringUtils.containsIgnoreCase(model, Models.GRAPH.toString()) ) {
-			CreateDependencyTree createDependencyTree = new CreateDependencyTree(recoveryLog, threads);
+		} else if (StringUtils.containsIgnoreCase(model, Models.GRAPH.toString())) {
+			CreateDependencyTree createDependencyTree = new CreateDependencyTree(readRecoveryFromFile, threads);
 			createDependencyTree.executeWorkflow();
-		} else if (StringUtils.containsIgnoreCase(model, Models.ATTACHED.toString()) ) {
-			DependenciesAttached dependenciesAttached = new DependenciesAttached(recoveryLog, threads);
+		} else if (StringUtils.containsIgnoreCase(model, Models.ATTACHED.toString())) {
+			DependenciesAttached dependenciesAttached = new DependenciesAttached(readRecoveryFromFile, threads);
 			dependenciesAttached.executeWorkflow();
 		}
 	}

@@ -4,6 +4,7 @@
 package pucrs.antunes.causalLog.recovery.model;
 
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
@@ -17,17 +18,17 @@ import pucrs.antunes.causalLog.recovery.map.KvsCmd;
 import pucrs.antunes.causalLog.utils.Utils;
 
 /**
- * @author rodrigo
+ * @author Rodrigo Antunes
  *
  */
 public class CreateDependencyTree extends RecoveryModel {
 
 	private final List<Task> scheduled = new LinkedList<>();
 
-	public CreateDependencyTree(byte[][] recoveryLog, int threads) {
+	public CreateDependencyTree(ArrayList<KvsCmd> recoveryLog, int threads) {
 		super(recoveryLog, threads);
-		pool = new ForkJoinPool(nThreads, ForkJoinPool.defaultForkJoinWorkerThreadFactory, null,
-				true, nThreads, nThreads, 0, null, 60, TimeUnit.SECONDS);
+		pool = new ForkJoinPool(nThreads, ForkJoinPool.defaultForkJoinWorkerThreadFactory, null, true, nThreads,
+				nThreads, 0, null, 60, TimeUnit.SECONDS);
 		System.out.println("Executing create dependency tree model...");
 	}
 
@@ -35,11 +36,14 @@ public class CreateDependencyTree extends RecoveryModel {
 	public void executeWorkflow() {
 		// Recovery from log
 		Stopwatch stopwatch = Stopwatch.createStarted();
-		for (int i = 0; i < recoveryLog.length; i++) {
-			byte[] bs = recoveryLog[i];
-			KvsCmd cmdFromLog = Utils.byteArrayToCmd(bs);
+		for (KvsCmd cmdFromLog : recoveryLog) {
 			doSchedule(cmdFromLog);
 		}
+//		for (int i = 0; i < recoveryLog.length; i++) {
+//			byte[] bs = recoveryLog[i];
+//			KvsCmd cmdFromLog = Utils.byteArrayToCmd(bs);
+//			doSchedule(cmdFromLog);
+//		}
 		pool.shutdown();
 		// next line will block till all tasks finishes
 		try {
@@ -54,20 +58,6 @@ public class CreateDependencyTree extends RecoveryModel {
 		System.out.println("Recovery time elapsed: " + stopwatch.elapsed(TimeUnit.SECONDS));
 	}
 
-	private byte[] execute(Task task) {
-		return delay.ensureMinCost(() -> {
-			ByteBuffer resp = ByteBuffer.allocate(4);
-			Integer cmdResult =  execute(task.request, replicaMap);
-			if (cmdResult == null) {
-				cmdResult = Integer.MIN_VALUE;
-			}
-			resp.putInt(cmdResult);
-			iterations.incrementAndGet();
-			// flagLastExecuted.set(task.request.getId());
-			return resp.array();
-		});
-	}
-
 	private void doSchedule(KvsCmd cmd) {
 		Task newTask = new Task(cmd);
 		submit(newTask, addTask(newTask));
@@ -77,20 +67,19 @@ public class CreateDependencyTree extends RecoveryModel {
 		List<CompletableFuture<Void>> dependencies = new LinkedList<>();
 		ListIterator<Task> iterator = scheduled.listIterator();
 
-		if (newTask.request.getType().isWrite) {
-			while (iterator.hasNext()) {
-				Task task = iterator.next();
-				if (task.future.isDone()) {
+		while (iterator.hasNext()) {
+			Task task = iterator.next();
 
-					iterator.remove();
-					continue;
-				}
+			if (task.future.isDone()) {
+				iterator.remove();
+				continue;
+			}
 
-				if (Utils.conflictWith(newTask.request, task.request)) {
-					dependencies.add(task.future);
-				}
+			if (Utils.conflictWith(newTask.request, task.request)) {
+				dependencies.add(task.future);
 			}
 		}
+
 		scheduled.add(newTask);
 		return dependencies;
 	}
@@ -114,4 +103,18 @@ public class CreateDependencyTree extends RecoveryModel {
 		return CompletableFuture.allOf(fs.toArray(new CompletableFuture[0]));
 	}
 
+	private byte[] execute(Task task) {
+		return delay.ensureMinCost(() -> {
+			ByteBuffer resp = ByteBuffer.allocate(4);
+			Integer cmdResult = execute(task.request, replicaMap);
+			if (cmdResult == null) {
+				cmdResult = Integer.MIN_VALUE;
+			}
+			resp.putInt(cmdResult);
+			iterations.incrementAndGet();
+			// flagLastExecuted.set(task.request.getId());
+			task.future.complete(null);
+			return resp.array();
+		});
+	}
 }
