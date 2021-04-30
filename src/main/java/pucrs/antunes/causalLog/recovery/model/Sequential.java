@@ -17,20 +17,14 @@ import pucrs.antunes.causalLog.recovery.map.KvsCmd;
  */
 public class Sequential extends RecoveryModel {
 
-	public Sequential(ArrayList<KvsCmd> recoveryLog, int threads) {
-		super(recoveryLog, threads);
+	public Sequential(ArrayList<KvsCmd> recoveryLog, int threads, int delayTime) {
+		super(recoveryLog, threads, delayTime);
 		System.out.println("Executing sequential model workload size: " + recoveryLog.size() +" number of threads: "+threads);
 	}
 
 	@Override
 	public void executeWorkflow() {
-		// Recovery from log
 		Stopwatch stopwatch = Stopwatch.createStarted();
-//		for (int i = 0; i < recoveryLog.length; i++) {
-//			byte[] bs = recoveryLog[i];
-//			KvsCmd cmdFromLog = Utils.byteArrayToCmd(bs);
-//			execute(cmdFromLog);
-//		}
 
 		for (KvsCmd cmdFromLog : recoveryLog) {
 			execute(cmdFromLog);

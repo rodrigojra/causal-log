@@ -23,8 +23,8 @@ import pucrs.antunes.causalLog.recovery.map.KvsCmd;
  */
 public class DependenciesAttached extends RecoveryModel {
 
-	public DependenciesAttached(ArrayList<KvsCmd> recoveryLog, int threads) {
-		super(recoveryLog, threads);
+	public DependenciesAttached(ArrayList<KvsCmd> recoveryLog, int threads, int delayTime) {
+		super(recoveryLog, threads, delayTime);
 		pool = new ForkJoinPool(nThreads, ForkJoinPool.defaultForkJoinWorkerThreadFactory, null, true, nThreads,
 				nThreads, 0, null, 60, TimeUnit.SECONDS);
 		System.out.println("Executing attached model workload size: " + recoveryLog.size() +" number of threads: "+threads);

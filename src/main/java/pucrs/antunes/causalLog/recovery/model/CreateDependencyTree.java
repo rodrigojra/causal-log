@@ -25,8 +25,8 @@ public class CreateDependencyTree extends RecoveryModel {
 
 	private final List<Task> scheduled = new LinkedList<>();
 
-	public CreateDependencyTree(ArrayList<KvsCmd> recoveryLog, int threads) {
-		super(recoveryLog, threads);
+	public CreateDependencyTree(ArrayList<KvsCmd> recoveryLog, int threads, int delayTime) {
+		super(recoveryLog, threads, delayTime);
 		pool = new ForkJoinPool(nThreads, ForkJoinPool.defaultForkJoinWorkerThreadFactory, null, true, nThreads,
 				nThreads, 0, null, 60, TimeUnit.SECONDS);
 		System.out.println("Executing graph model workload size: " + recoveryLog.size() +" number of threads: "+threads);

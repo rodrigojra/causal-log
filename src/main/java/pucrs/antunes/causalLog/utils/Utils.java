@@ -52,16 +52,19 @@ public class Utils {
 	}
 
 	public static boolean conflictWith(KvsCmd cmdA, KvsCmd cmdB) {
-		// TODO: mudar para ||??
 		return (cmdA.getType().isWrite || cmdB.getType().isWrite) && cmdA.getKey().equals(cmdB.getKey());
 	}
 
 	public static void generateRecoveryLog(int workloadSize, int maxKey, float sparseness, float conflict,
-			boolean isJson) {
+			boolean isJson,  boolean skipDependencies) {
 		ArrayList<KvsCmd> cmdArray = new ArrayList<KvsCmd>();
 		generateCommands(workloadSize, maxKey, sparseness, conflict, cmdArray);
-		generateDependenciesForEachCmd(cmdArray);
-		saveCmdToFile(cmdArray, workloadSize, sparseness);
+		
+		if (!skipDependencies) {
+			generateDependenciesForEachCmd(cmdArray);
+		}
+		
+		saveCmdToFile(cmdArray, workloadSize, sparseness, skipDependencies);
 		
 		if (isJson) {
 			saveCmdToJSON(cmdArray, workloadSize, sparseness);
@@ -83,15 +86,19 @@ public class Utils {
 		}
 	}
 
-	public static void saveCmdToFile(ArrayList<KvsCmd> cmdArray, int workload, float sparseness) {
+	public static void saveCmdToFile(ArrayList<KvsCmd> cmdArray, int workload, float sparseness, boolean skipDependencies) {
 		try {
 //			Date date = new Date();
 //			SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss-SS");
 
 			// FileOutputStream writeData = new FileOutputStream("target/recovery-bin" +
 			// dateFormat.format(date) + ".dat");
-			FileOutputStream writeData = new FileOutputStream(
-					"target/recovery-w-" + workload + "-conflict-" + sparseness + ".dat");
+
+			String fileName = "recovery/recovery-w-" + workload + "-conflict-" + sparseness + ".dat";
+			if  (skipDependencies) {
+				fileName = "recovery/" + workload +"-log-without-conflict.dat";
+			}
+			FileOutputStream writeData = new FileOutputStream(fileName);
 			ObjectOutputStream writeStream = new ObjectOutputStream(writeData);
 
 			writeStream.writeObject(cmdArray);
@@ -106,7 +113,7 @@ public class Utils {
 	public static ArrayList<KvsCmd> readRecoveryLogFromFile(String filename) {
 		ArrayList<KvsCmd> cmdArray = null;
 		try {
-			FileInputStream readData = new FileInputStream("target/" + filename);
+			FileInputStream readData = new FileInputStream("recovery/" + filename);
 			ObjectInputStream readStream = new ObjectInputStream(readData);
 			cmdArray = (ArrayList<KvsCmd>) readStream.readObject();
 			readStream.close();

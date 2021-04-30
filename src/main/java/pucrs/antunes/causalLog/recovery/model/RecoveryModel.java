@@ -45,16 +45,19 @@ public abstract class RecoveryModel {
 		}
 	}
 
-	SyntacticDelay delay = new SyntacticDelay(1000000);
+	SyntacticDelay delay;
 	protected ConcurrentHashMap<Integer, Integer> replicaMap = new ConcurrentHashMap<Integer, Integer>();
 	protected AtomicInteger iterations = new AtomicInteger(0);
 	protected ArrayList<KvsCmd> recoveryLog;
 	protected int nThreads;
 	protected ExecutorService pool;
+	protected int delayTime;
 
-	public RecoveryModel(ArrayList<KvsCmd> recoveryLog, int threads) {
+	public RecoveryModel(ArrayList<KvsCmd> recoveryLog, int threads, int delayTime) {
 		this.recoveryLog = recoveryLog;
 		this.nThreads = threads;
+		this.delayTime = delayTime;
+		this.delay = new SyntacticDelay(delayTime);
 	}
 
 	protected Integer execute(KvsCmd cmd, Map<Integer, Integer> state) {
