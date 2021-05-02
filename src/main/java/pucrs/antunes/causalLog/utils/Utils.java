@@ -181,20 +181,10 @@ public class Utils {
 	}
 
 	private static void generateDependenciesForEachCmd(ArrayList<KvsCmd> cmdArrayList) {
-
-		// dependenciesOneLevel(cmdArrayList);
-
-		// ArrayList<KvsCmd> dependencyList = null;
-
 		for (int index = cmdArrayList.size() - 1; index >= 0; index--) {
 			KvsCmd cmd = cmdArrayList.get(index);
-			// dependencyList = new ArrayList<KvsCmd>(0);
 
-			// for (KvsCmd dep : cmdArrayList) {
 			for (int j = index - 1; j >= 0; j--) {
-//				if (j < 0) {
-//					break;
-//				}
 				KvsCmd dep = cmdArrayList.get(j);
 
 				if (conflictWith(cmd, dep)) {

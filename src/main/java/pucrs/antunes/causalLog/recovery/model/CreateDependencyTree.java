@@ -27,8 +27,8 @@ public class CreateDependencyTree extends RecoveryModel {
 
 	public CreateDependencyTree(ArrayList<KvsCmd> recoveryLog, int threads, int delayTime) {
 		super(recoveryLog, threads, delayTime);
-		pool = new ForkJoinPool(nThreads, ForkJoinPool.defaultForkJoinWorkerThreadFactory, null, true, nThreads,
-				nThreads, 0, null, 60, TimeUnit.SECONDS);
+		pool = new ForkJoinPool(threads, ForkJoinPool.defaultForkJoinWorkerThreadFactory, null, true, threads,
+				threads, 0, null, 60, TimeUnit.SECONDS);
 		System.out.println("Executing graph model workload size: " + recoveryLog.size() +" number of threads: "+threads);
 		
 	}
@@ -37,14 +37,11 @@ public class CreateDependencyTree extends RecoveryModel {
 	public void executeWorkflow() {
 		// Recovery from log
 		Stopwatch stopwatch = Stopwatch.createStarted();
+		
 		for (KvsCmd cmdFromLog : recoveryLog) {
 			doSchedule(cmdFromLog);
 		}
-//		for (int i = 0; i < recoveryLog.length; i++) {
-//			byte[] bs = recoveryLog[i];
-//			KvsCmd cmdFromLog = Utils.byteArrayToCmd(bs);
-//			doSchedule(cmdFromLog);
-//		}
+
 		pool.shutdown();
 		// next line will block till all tasks finishes
 		try {
@@ -61,7 +58,8 @@ public class CreateDependencyTree extends RecoveryModel {
 
 	private void doSchedule(KvsCmd cmd) {
 		Task newTask = new Task(cmd);
-		submit(newTask, addTask(newTask));
+		List<CompletableFuture<Void>> depList = addTask(newTask);
+		submit(newTask, depList);
 	}
 
 	private List<CompletableFuture<Void>> addTask(Task newTask) {
@@ -76,7 +74,7 @@ public class CreateDependencyTree extends RecoveryModel {
 				continue;
 			}
 
-			if (Utils.conflictWith(newTask.request, task.request)) {
+			if (Utils.conflictWith(newTask.cmd, task.cmd)) {
 				dependencies.add(task.future);
 			}
 		}
@@ -107,7 +105,7 @@ public class CreateDependencyTree extends RecoveryModel {
 	private byte[] execute(Task task) {
 		return delay.ensureMinCost(() -> {
 			ByteBuffer resp = ByteBuffer.allocate(4);
-			Integer cmdResult = execute(task.request, replicaMap);
+			Integer cmdResult = execute(task.cmd, replicaMap);
 			if (cmdResult == null) {
 				cmdResult = Integer.MIN_VALUE;
 			}

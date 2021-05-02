@@ -40,44 +40,28 @@ public class DependenciesAttached extends RecoveryModel {
 
 		while (iterator.hasNext()) {
 			KvsCmd cmdFromLog = iterator.next();
-//		for (int i = 0; i < recoveryLog.length; i++) {
-//			byte[] bs = recoveryLog[i];
-//			KvsCmd cmdFromLog = Utils.byteArrayToCmd(bs);
 			Task newTask = new Task(cmdFromLog);
 			addTaskMap(newTask);
 			List<CompletableFuture<Void>> dependencies = new LinkedList<>();
 
-			if (newTask.request.getDependencies() != null && !newTask.request.getDependencies().isEmpty()) {
+			if (newTask.cmd.getDependencies() != null && !newTask.cmd.getDependencies().isEmpty()) {
 				Task dependentTask = null;
-				ListIterator<KvsCmd> iterDependencies = newTask.request.getDependencies().listIterator();
+				ListIterator<KvsCmd> iterDependencies = newTask.cmd.getDependencies().listIterator();
 				while (iterDependencies.hasNext()) {
 					KvsCmd cmdDependency = iterDependencies.next();
-//				}
-//				for (KvsCmd cmdDependency : newTask.request.getDependencies()) {
+
 					if (scheduledMap.containsKey(cmdDependency.getId())) {
 						dependentTask = scheduledMap.get(cmdDependency.getId());
-					} // else {
-						// Task depTask = new Task(cmdDependency);
-						// scheduledMap.put(cmdDependency.getId(), depTask);
-						// t = depTask;
-						// }
+					}
+
 					if (!dependentTask.future.isDone()) {
 						dependencies.add(dependentTask.future);
 					}
-
-					// se ele nao estiver no map pode ser um erro, pode ser um comando de outro
-					// batch/checkpoint
-					// isso deixaria o comando orfao, como temos o comando, podemos forçar a
-					// execuçao dele
-					// O problema 'e que se o comando foi executado, ele sera executado de novo.
 				}
 				submit(newTask, dependencies);
 			} else {
 				pool.execute(() -> execute(newTask));
-				// execute(newTask);
 			}
-
-			// submit(newTask, dependencies);
 		}
 
 		pool.shutdown();
@@ -85,7 +69,6 @@ public class DependenciesAttached extends RecoveryModel {
 		try {
 			pool.awaitTermination(Long.MAX_VALUE, TimeUnit.DAYS);
 		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 
@@ -95,16 +78,16 @@ public class DependenciesAttached extends RecoveryModel {
 	}
 
 	private void addTaskMap(Task newTask) {
-		scheduledMap.put(newTask.request.getId(), newTask);
+		scheduledMap.put(newTask.cmd.getId(), newTask);
 	}
 
 	private void submit(Task newTask, List<CompletableFuture<Void>> dependencies) {
 		if (dependencies.isEmpty()) {
-			// System.out.println("submit pool =>" + newTask.request.getId());
+			// System.out.println("submit pool =>" + newTask.cmd.getId());
 			pool.execute(() -> execute(newTask));
 			// execute(newTask);
 		} else {
-			// System.out.println("submit cf => " + newTask.request.getId());
+			// System.out.println("submit cf => " + newTask.cmd.getId());
 			after(dependencies).thenRun(() -> {
 				execute(newTask);
 			});
@@ -120,13 +103,13 @@ public class DependenciesAttached extends RecoveryModel {
 	private byte[] execute(Task task) {
 		return delay.ensureMinCost(() -> {
 			ByteBuffer resp = ByteBuffer.allocate(4);
-			Integer cmdResult = execute(task.request, replicaMap);
+			Integer cmdResult = execute(task.cmd, replicaMap);
 			if (cmdResult == null) {
 				cmdResult = Integer.MIN_VALUE;
 			}
 			resp.putInt(cmdResult);
 			iterations.incrementAndGet();
-			// flagLastExecuted.set(task.request.getId());
+			// flagLastExecuted.set(task.cmd.getId());
 			task.future.complete(null);
 			return resp.array();
 		});

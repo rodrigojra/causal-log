@@ -36,11 +36,11 @@ public abstract class RecoveryModel {
 	}
 
 	static final class Task {
-		final KvsCmd request;
+		final KvsCmd cmd;
 		final CompletableFuture<Void> future;
 
-		Task(KvsCmd request) {
-			this.request = request;
+		Task(KvsCmd cmd) {
+			this.cmd = cmd;
 			this.future = new CompletableFuture<>();
 		}
 	}
