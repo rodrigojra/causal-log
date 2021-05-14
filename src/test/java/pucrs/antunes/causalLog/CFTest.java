@@ -28,7 +28,7 @@ public class CFTest {
 		}
 
 		CompletableFuture<Void> combinedFuture = CompletableFuture.allOf(future1, future2, future3);
-		
+
 		// ...
 
 		try {
